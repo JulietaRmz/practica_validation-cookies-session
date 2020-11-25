@@ -4,6 +4,26 @@ const bcryptjs = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
 
+const usersFilePath = path.join(__dirname, '../database/users.json');
+
+function getAllProducts() {
+    return JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+}
+
+function getNewId() {
+    const users = JSON.parse(fs.readFileSync(usersFilePath, 'utf-8'));
+    if (users.id==undefined)   {
+      return 1;
+    } 
+    return users.pop().id + 1;
+}
+
+function writeUsers(array) {
+    const usersJson = JSON.stringify(array, null, " ");
+    fs.writeFileSync(usersFilePath, usersJson);
+}
+
+
 module.exports = {
     showRegister: (req, res) => {
         return res.render('user/user-register-form');
@@ -12,17 +32,16 @@ module.exports = {
     processRegister: (req, res) => {
         const passwordHashed = bcryptjs.hashSync(req.body.password, 5);
         const user = {
-            id: helperUsers.getNewId(),
+            id: getNewId(),
             email: req.body.email,
             password: passwordHashed,
-            avatar : req.files[0].filename
+            avatar : ""/* req.files[0].filename */
         }
         let errors=validationResult(req);
         if (!errors.isEmpty) {
             res.render('user-register-form', { errors:errors.errors})
         }
-
-        helperUsers.writeUser(user);
+        writeUsers(user);
         res.redirect('/');
     },
 
